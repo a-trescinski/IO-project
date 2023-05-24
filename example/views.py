@@ -1,10 +1,41 @@
 # example/views.py
 from datetime import datetime
+import yfinance as yf
 
 from django.http import HttpResponse
 
+
+def get_list_of_currencies():
+    '''nk sprawdzi, czy jest jakaś prosta metoda
+     na pobranie wszystkich/wybranych trzyliterowych
+     oznaczeń walut: [USD,EUR,JPN,...]'''
+    return ['EUR', 'USD', 'GBP', 'JPY']
+
+def get_current_price(symbol):
+    """Get basic currency information from last day"""
+    ticker = yf.Ticker(symbol)
+    today_data = ticker.history(period='1d')
+    return today_data
+
+
+def get_currency_table_html(currencies, rounding=.4):
+    currency_html = ""
+    for currency in currencies:
+        symbol = currency + 'PLN=X'
+        currency_info = get_current_price(symbol)
+        currency_html += f'''<tr>
+                                    <td>{currency}</td>
+                                    <td>{currency_info['Open'][0]:{rounding}f}</td>
+                                    <td>{currency_info['High'][0]:{rounding}f}</td>
+                                    <td>{currency_info['Low'][0]:{rounding}f}</td>
+                                    <td>{currency_info['Close'][0]:{rounding}f}</td>
+                                  </tr>'''
+    return currency_html
+
+
 def index(request):
     now = datetime.now()
+    currencies = get_list_of_currencies()
     css_code = '''
     <style>
         body {
@@ -45,7 +76,6 @@ def index(request):
         }
     </style>
     '''
-
     html = f'''
     <html>
         <head>
@@ -64,26 +94,14 @@ def index(request):
                     <thead>
                       <tr>
                         <th>Waluta</th>
-                        <th>Kurs kupna</th>
-                        <th>Kurs sprzedaży</th>
+                        <th>Otwarcie</th>
+                        <th>Szczyt</th>
+                        <th>Dół</th>
+                        <th>Zamknięcie</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>USD</td>
-                        <td>3.85</td>
-                        <td>3.90</td>
-                      </tr>
-                      <tr>
-                        <td>EUR</td>
-                        <td>4.30</td>
-                        <td>4.35</td>
-                      </tr>
-                      <tr>
-                        <td>GBP</td>
-                        <td>5.10</td>
-                        <td>5.20</td>
-                      </tr>
+                    {get_currency_table_html(currencies)}
                     </tbody>
                   </table>
             </div>
