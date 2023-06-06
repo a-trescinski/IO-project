@@ -1,9 +1,11 @@
 # example/views.py
 from datetime import datetime
 import yfinance as yf
-
+import random
+import json
+from django.shortcuts import render
 from django.http import HttpResponse
-
+from datetime import timedelta
 
 def get_list_of_currencies():
     '''nk sprawdzi, czy jest jakaś prosta metoda
@@ -11,25 +13,78 @@ def get_list_of_currencies():
      oznaczeń walut: [USD,EUR,JPN,...]'''
     return ['EUR', 'USD', 'GBP', 'JPY']
 
-def get_current_price(symbol):
-    """Get basic currency information from last day"""
+def get_currency_info(symbol):
     ticker = yf.Ticker(symbol)
     today_data = ticker.history(period='1d')
-    return today_data
-
+    bid_price = ticker.info.get('bid')
+    ask_price = ticker.info.get('ask')
+    week_data = ticker.history(period='1wk')
+    closing_prices = week_data['Close'].tolist()
+    date_labels = (week_data.index - timedelta(days=6)).strftime('%Y-%m-%d').tolist()
+    return today_data, bid_price, ask_price, closing_prices, date_labels
 
 def get_currency_table_html(currencies, rounding=.4):
     currency_html = ""
     for currency in currencies:
         symbol = currency + 'PLN=X'
-        currency_info = get_current_price(symbol)
+        currency_info = get_currency_info(symbol)
         currency_html += f'''<tr>
-                                    <td>{currency}</td>
-                                    <td>{currency_info['Open'][0]:{rounding}f}</td>
-                                    <td>{currency_info['High'][0]:{rounding}f}</td>
-                                    <td>{currency_info['Low'][0]:{rounding}f}</td>
-                                    <td>{currency_info['Close'][0]:{rounding}f}</td>
-                                  </tr>'''
+                                <td>{currency}</td>
+                                <td>{currency_info[0]['Open'][-1]:{rounding}f}</td>
+                                <td>{currency_info[0]['High'].max():{rounding}f}</td>
+                                <td>{currency_info[0]['Low'].min():{rounding}f}</td>
+                                <td>{currency_info[0]['Close'][-1]:{rounding}f}</td>
+                                <td>{currency_info[1]:{rounding}f}</td>
+                                <td>{currency_info[2]:{rounding}f}</td>
+                                <td>
+                                    <div class="chart-container">
+                                        <canvas id="{currency}-chart"></canvas>
+                                    </div>
+                                </td>
+                              </tr>
+                              <script>
+                                  var ctx = document.getElementById("{currency}-chart").getContext("2d");
+                                  var chart = new Chart(ctx, {{
+                                      type: 'line',
+                                      data: {{
+                                          labels: {json.dumps(currency_info[4])},
+                                          datasets: [{{
+                                              label: '{currency} Closing Prices',
+                                              data: {json.dumps(currency_info[3])},
+                                              backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                                              borderColor: 'rgba(0, 123, 255, 1)',
+                                              borderWidth: 1,
+                                              tension: 0.4
+                                          }}]
+                                      }},
+                                      options: {{
+                                          responsive: true,
+                                          maintainAspectRatio: false,
+                                          plugins: {{
+                                              legend: {{
+                                                  display: false
+                                              }}
+                                          }},
+                                          scales: {{
+                                              x: {{
+                                                  display: true,
+                                                  ticks: {{
+                                                      autoSkip: true,
+                                                      maxTicksLimit: 6
+                                                  }}
+                                              }},
+                                              y: {{
+                                                  display: true,
+                                                  ticks: {{
+                                                      callback: function(value, index, values) {{
+                                                          return value.toFixed(2);
+                                                      }}
+                                                  }}
+                                              }}
+                                          }}
+                                      }}
+                                  }});
+                              </script>'''
     return currency_html
 
 
@@ -38,76 +93,130 @@ def index(request):
     currencies = get_list_of_currencies()
     css_code = '''
     <style>
-        body {
+        * {
+          border: none;
+          outline: none;
+        }
+            
+         body {
           font-family: Arial, sans-serif;
           margin: 0;
-          padding: 20px;
           background-color: #f2f2f2;
+        }
+
+        #header {
+          width: 100%;
+        }
+        
+        #main {
+          margin-top: 50px;
         }
         
         img {
           display: block;
           margin-left: auto;
           margin-right: auto;
+          width: 100%;
+          height: auto;
         }
-        
+
         h1 {
           text-align: center;
         }
-        
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 20px;
+
+        @media only screen and (max-width: 600px) {
+          h1 {
+            font-size: 18px;
+          }
         }
         
-        th, td {
-          padding: 10px;
-          text-align: center;
-          border: 1px solid #ccc;
-        }
-        
-        th {
-          background-color: #e0e0e0;
-        }
-        
-        tr:nth-child(even) {
-          background-color: #f9f9f9;
+        .mt-4 {
+          padding: 0px 250px;
         }
     </style>
     '''
+    chart_script = '''
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+    '''
+    bootstrap_link = '''
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    '''
+    bootstrap_script = '''
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KyZXEAg3QhqLMpG8r+6+Scdh5PDUo3I5td0nqj7P2JqRAFa3a625fcd00zstjQ4y" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    '''
     html = f'''
     <html>
-        <head>
-            <title>Super strona!</title>
-            %(css_code)s
-        </head>
-        <body>
-            <div id="header">
-                <img src="https://cdn.pixabay.com/photo/2018/03/10/09/45/businessman-3213659_960_720.jpg">
+      <head>
+        <title>Zabawne kursy na każdy dzień!</title>
+        {chart_script}
+        {css_code}
+        {bootstrap_link}
+        {bootstrap_script}
+      </head>
+      <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container">
+            <a class="navbar-brand" href="#">Złoty Stand-up</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                  <a class="nav-link" href="#">Strona główna</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#">Kursy</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#">O nas</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#">Kontakt</a>
+                </li>
+              </ul>
             </div>
-            
-            <div id="main">
-                  <h1>Kursy Walut</h1>
-  
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Waluta</th>
-                        <th>Otwarcie</th>
-                        <th>Szczyt</th>
-                        <th>Dół</th>
-                        <th>Zamknięcie</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    {get_currency_table_html(currencies)}
-                    </tbody>
-                  </table>
-            </div>
-        </body>
+          </div>
+        </nav>
+        
+        <section class="mt-4">
+            <p>Rynek walutowy, znany również jako Forex, jest największym i najbardziej płynnym rynkiem na świecie. Tutaj handluje się różnymi walutami z całego globu, tworząc nieustanne możliwości inwestycyjne. Na naszej stronie prezentujemy aktualne kursy walut wobec złotego, aby pomóc Ci śledzić zmiany w wartości walut i podejmować informowane decyzje inwestycyjne.</p>
+            <p>Na stronie znajdziesz aktualne kursy kilku najważniejszych walut światowych. Są to między innymi dolar amerykański (USD), euro (EUR), funt brytyjski (GBP) i jen japoński (JPY). Kursy walut są aktualizowane na bieżąco, umożliwiając Ci monitorowanie zmian wartości tych walut w stosunku do polskiego złotego.</p>
+            <p>Nasza strona nie tylko dostarcza aktualnych kursów walut, ale również udostępnia narzędzia i wykresy, które mogą pomóc Ci analizować trendy i prognozować przyszłe zmiany w wartości walut. Możesz zobaczyć wykresy historyczne, porównać wybrane waluty i przeprowadzić techniczną analizę, aby uzyskać lepsze zrozumienie rynku.</p>
+            <p>Na naszej stronie znajdziesz również aktualne informacje o najważniejszych wydarzeniach gospodarczych, które mogą mieć wpływ na kursy walut. Regularnie aktualizujemy nasze wiadomości, abyś był na bieżąco z najświeższymi informacjami związanymi z gospodarką światową i mogłeś lepiej zrozumieć, dlaczego kursy walut się zmieniają.</p>
+            <p>Inwestowanie na rynku walutowym może być zarówno ekscytujące, jak i ryzykowne. Dlatego na naszej stronie udostępniamy porady i wskazówki dotyczące inwestowania w waluty. Dowiesz się, jak analizować rynek, zarządzać ryzykiem i podejmować trafne decyzje inwestycyjne. Pamiętaj, że inwestowanie na rynku walutowym wiąże się z ryzykiem straty kapitału, dlatego zawsze powinieneś dobrze się zastanowić i skonsultować z profesjonalistą przed podjęciem jakichkolwiek decyzji inwestycyjnych.</p>
+        </section>
+
+        <div id="main" class="container">
+          <div class="d-flex justify-content-between align-items-center">
+            <h1>Obecne kursy walut:</h1>
+            <button class="btn btn-primary" id="alert-button">Ustaw alert!</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered mt-4">
+              <thead>
+                <tr>
+                  <th>Waluta</th>
+                  <th>Otwarcie</th>
+                  <th>Szczyt</th>
+                  <th>Dół</th>
+                  <th>Zamknięcie</th>
+                  <th>Bid</th>
+                  <th>Ask</th>
+                  <th>Wykres</th>
+                </tr>
+              </thead>
+              <tbody>
+                {get_currency_table_html(currencies)}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </body>
     </html>
     '''
 
-    response = HttpResponse(html % {'css_code': css_code})
-    return response
+    return HttpResponse(html)
