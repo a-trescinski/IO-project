@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import yfinance as yf
+import random
 import json
+from django.shortcuts import render
 from django.http import HttpResponse
 
 def get_list_of_currencies():
