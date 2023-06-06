@@ -1,16 +1,9 @@
-# example/views.py
-from datetime import datetime
+from datetime import datetime, timedelta
 import yfinance as yf
-import random
 import json
-from django.shortcuts import render
 from django.http import HttpResponse
-from datetime import timedelta
 
 def get_list_of_currencies():
-    '''nk sprawdzi, czy jest jakaś prosta metoda
-     na pobranie wszystkich/wybranych trzyliterowych
-     oznaczeń walut: [USD,EUR,JPN,...]'''
     return ['EUR', 'USD', 'GBP', 'JPY']
 
 def get_currency_info(symbol):
@@ -155,6 +148,13 @@ def index(request):
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     '''
+    script = '''
+        <script>
+            function sendAlert() {
+                alert("Wysyłanie maila...");
+            }
+        </script>
+    '''
     html = f'''
     <html>
       <head>
@@ -163,11 +163,12 @@ def index(request):
         {css_code}
         {bootstrap_link}
         {bootstrap_script}
+        {script}
       </head>
       <body>
         <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
           <div class="container">
-            <a class="navbar-brand" href="https://io-project-eta.vercel.app/">Złoty Stand-up</a>
+            <a class="navbar-brand text-warning" href="https://io-project-eta.vercel.app/">Złoty Stand-up</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
@@ -183,7 +184,7 @@ def index(request):
                   <a class="nav-link" href="#about">O nas</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#contact">Kontakt</a>
+                  <a class="nav-link" href="#footer">Kontakt</a>
                 </li>
               </ul>
             </div>
@@ -201,7 +202,7 @@ def index(request):
         <div id="main" class="container">
           <div class="d-flex justify-content-between align-items-center">
             <h1>Obecne kursy walut:</h1>
-            <button class="btn btn-primary" id="alert-button">Ustaw alert!</button>
+            <button class="btn btn-primary" id="alert-button" onclick="sendAlert()">Ustaw alert!</button>
           </div>
 
           <div class="table-responsive">
@@ -240,14 +241,25 @@ def index(request):
           </div>
         </section>
         
-        <section id="contact">
-          <div class="container">
-            <h2>Kontakt z nami:</h2>
-            <p>
-                Uniwersytet Pedagogiczny im. Komisji Edukacji Narodowej w Krakowie
-            </p>
-          </div>
-        </section>
+        <footer class="bg-dark text-light py-4" id="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h4>Kontakt</h4>
+                        Uniwersytet Pedagogiczny im. Komisji Edukacji Narodowej w Krakowie
+                    </div>
+                    <div class="col-lg-6">
+                        <h4>Linki</h4>
+                        <ul class="list-unstyled">
+                            <li><a href="https://io-project-eta.vercel.app/">Strona główna</a></li>
+                            <li><a href="#main">Kursy</a></li>
+                            <li><a href="#about">O nas</a></li>
+                            <li><a href="#contact">Kontakt</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
       </body>
     </html>
     '''
