@@ -123,6 +123,18 @@ def index(request):
         h1 {
           text-align: center;
         }
+        
+        .mt-4 {
+          padding-top: 50px;
+        }
+        
+        table {
+          text-align: center;
+        }
+        
+        td, th {
+          vertical-align: middle;
+        }
 
         @media only screen and (max-width: 600px) {
           h1 {
@@ -130,9 +142,6 @@ def index(request):
           }
         }
         
-        .mt-4 {
-          padding: 0px 250px;
-        }
     </style>
     '''
     chart_script = '''
@@ -156,32 +165,32 @@ def index(request):
         {bootstrap_script}
       </head>
       <body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
           <div class="container">
-            <a class="navbar-brand" href="#">Złoty Stand-up</a>
+            <a class="navbar-brand" href="https://io-project-eta.vercel.app/">Złoty Stand-up</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                  <a class="nav-link" href="#">Strona główna</a>
+                  <a class="nav-link" href="https://io-project-eta.vercel.app/">Strona główna</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#">Kursy</a>
+                  <a class="nav-link" href="#main">Kursy</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#">O nas</a>
+                  <a class="nav-link" href="#about">O nas</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#">Kontakt</a>
+                  <a class="nav-link" href="#contact">Kontakt</a>
                 </li>
               </ul>
             </div>
           </div>
         </nav>
         
-        <section class="mt-4">
+        <section class="mt-4 container">
             <p>Rynek walutowy, znany również jako Forex, jest największym i najbardziej płynnym rynkiem na świecie. Tutaj handluje się różnymi walutami z całego globu, tworząc nieustanne możliwości inwestycyjne. Na naszej stronie prezentujemy aktualne kursy walut wobec złotego, aby pomóc Ci śledzić zmiany w wartości walut i podejmować informowane decyzje inwestycyjne.</p>
             <p>Na stronie znajdziesz aktualne kursy kilku najważniejszych walut światowych. Są to między innymi dolar amerykański (USD), euro (EUR), funt brytyjski (GBP) i jen japoński (JPY). Kursy walut są aktualizowane na bieżąco, umożliwiając Ci monitorowanie zmian wartości tych walut w stosunku do polskiego złotego.</p>
             <p>Nasza strona nie tylko dostarcza aktualnych kursów walut, ale również udostępnia narzędzia i wykresy, które mogą pomóc Ci analizować trendy i prognozować przyszłe zmiany w wartości walut. Możesz zobaczyć wykresy historyczne, porównać wybrane waluty i przeprowadzić techniczną analizę, aby uzyskać lepsze zrozumienie rynku.</p>
@@ -215,6 +224,30 @@ def index(request):
             </table>
           </div>
         </div>
+        
+        <section id="about">
+          <div class="container">
+            <h2>O Nas</h2>
+            <p>
+              Jesteśmy młodym i dynamicznym zespołem pasjonatów finansów i technologii. Naszą misją jest dostarczenie użytkownikom łatwego i intuicyjnego sposobu śledzenia aktualnych kursów walut.
+            </p>
+            <p>
+              Nasza strona powstała z myślą o tych, którzy potrzebują szybkiego dostępu do aktualnych informacji o kursach walut. Chcieliśmy stworzyć miejsce, gdzie użytkownicy mogą na bieżąco śledzić zmiany i analizować wykresy, aby podejmować lepsze decyzje inwestycyjne.
+            </p>
+            <p>
+              Nasz zespół składa się z doświadczonych ekspertów finansowych i programistów, którzy połączyli swoje umiejętności, aby stworzyć tę stronę. Dążymy do ciągłego doskonalenia naszych usług i dostarczania najbardziej aktualnych i dokładnych danych o kursach walut.
+            </p>
+          </div>
+        </section>
+        
+        <section id="contact">
+          <div class="container">
+            <h2>Kontakt z nami:</h2>
+            <p>
+                Uniwersytet Pedagogiczny im. Komisji Edukacji Narodowej w Krakowie
+            </p>
+          </div>
+        </section>
       </body>
     </html>
     '''
